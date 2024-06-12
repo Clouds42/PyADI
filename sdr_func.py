@@ -61,3 +61,14 @@ def time_rec(rx_samples, sps):
     # remove the first two, and anything after i_out (that was never filled out)
     out = out[2:i_out]
     return out
+
+def find_frame(array, threhold = 800, start_index = 40000):
+    sliced_array = array[start_index:]
+    abs_array = np.abs(sliced_array)
+    greater_than = abs_array > threhold
+    index = np.argmax(greater_than)
+
+    if index != 0 and greater_than[index]:
+        print(f"第一个绝对值大于{threhold}的元素的索引是：{index + start_index}")
+    else:
+        print(f"没有找到绝对值大于{threhold}的元素。")

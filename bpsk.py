@@ -1,5 +1,6 @@
 import numpy as np
 import adi
+import matplotlib.pyplot as plt
 from sdr_func import *
 import time
 
@@ -27,12 +28,17 @@ data_shaped = pulse_shape(data, sps)
 
 # Transmit data
 sdr.tx_cyclic_buffer = True  # enable cyclic buffers
-tx_samples = data_shaped*(2**14)  # Pluto SDR accepts value between -2^14 to 2^14
+# Pluto SDR accepts value between -2^14 to 2^14
+tx_samples = data_shaped*(2**14)
 sdr.tx(tx_samples)  # start transmitting
 
 # Receive data
 rx_samples = sdr.rx()  # receiving
 rx_samples = norm(rx_samples)  # normalizing to (0, 1)
+# plt.plot(np.real(rx_samples), np.imag(rx_samples), '.')
+# plt.xlim((-0.1, 1.1))
+# plt.ylim((-1.1, 1.1))
+# plt.show()
 sdr.tx_destroy_buffer()  # stop transmitting
 
 # Time synchronization
@@ -43,8 +49,9 @@ result = np.where(out > 0.5, 1, 0)
 print(result)
 
 # Received the frame that had just transmitted
-print(contain(result, [1, 1, 1, 0, 0, 1, 0]) | contain(
-    result, [1, 1, 1, 0, 1, 1, 0]) | contain(result, [1, 1, 1, 1, 0, 1, 0]))
+print(contain(result, [1, 1, 1, 0, 0, 1, 0]) |
+      contain(result, [1, 1, 1, 0, 1, 1, 0]) |
+      contain(result, [1, 1, 1, 1, 0, 1, 0]))
 
 end = time.time()
 print(end - start)
