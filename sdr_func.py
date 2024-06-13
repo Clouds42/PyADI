@@ -67,8 +67,11 @@ def find_frame(array, threhold = 800, start_index = 40000):
     abs_array = np.abs(sliced_array)
     greater_than = abs_array > threhold
     index = np.argmax(greater_than)
+    result = index + start_index
 
     if index != 0 and greater_than[index]:
-        print(f"第一个绝对值大于{threhold}的元素的索引是：{index + start_index}")
+        print(f"第一个绝对值大于{threhold}的元素的索引是：{result}")
     else:
         print(f"没有找到绝对值大于{threhold}的元素。")
+
+    return result
