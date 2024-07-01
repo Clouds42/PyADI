@@ -39,18 +39,39 @@ def rx(q):
 
 
 def main():
+    start_time = time.time()
     results_queue = queue.Queue()
-    t1 = threading.Thread(target=tx)
-    t2 = threading.Thread(target=rx, args=(results_queue,))
 
-    t1.start()
-    t2.start()
+    i = 0
+    epoch = 100
+    result = np.zeros(epoch)
+    while i < epoch:
+        # time.sleep(0.02)
+        t1 = threading.Thread(target=tx)
+        t2 = threading.Thread(target=rx, args=(results_queue,))
 
-    t1.join()
-    t2.join()
+        t1.start()
+        t2.start()
 
-    while not results_queue.empty():
-        print("Main thread received:", results_queue.get())
+        t1.join()
+        t2.join()
+
+        while not results_queue.empty():
+            index = results_queue.get()
+            print(f"The {i}-th frame detected. Index: {index}")
+            result[i] = index
+
+        i = i + 1
+
+    print(result)
+    mean = np.mean(result)
+    print(mean)
+    end_time = time.time()
+    print(end_time - start_time)
+    plt.plot(result, 'o-')
+    plt.grid()
+    plt.ylim([0, 70000])
+    plt.show()
 
 
 if __name__ == "__main__":

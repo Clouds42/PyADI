@@ -70,8 +70,8 @@ def find_frame(array, threhold = 800, start_index = 40000):
     result = index + start_index
 
     if index != 0 and greater_than[index]:
-        print(f"第一个绝对值大于{threhold}的元素的索引是：{result}")
+        # print(f"第一个绝对值大于{threhold}的元素的索引是：{result}")
+        return result
     else:
-        print(f"没有找到绝对值大于{threhold}的元素。")
-
-    return result
+        # print(f"没有找到绝对值大于{threhold}的元素。")
+        return 0
