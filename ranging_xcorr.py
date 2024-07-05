@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import queue
 from sdr_func import *
 
-local = 1  # 1 or 0
+local = 0  # 1 or 0
 single = 0  # 1 or 0
 plot = 0
 
@@ -14,17 +14,17 @@ sdr = adi.Pluto("ip:ant.local")
 sdr.sample_rate = 1000000
 
 sdr.gain_control_mode_chan0 = 'manual'
-sdr.rx_lo = 2400000000 if local == 1 else 915000000
+sdr.rx_lo = 2400000000 if local == 1 else 2500000000
 sdr.rx_rf_bandwidth = 20000000
 sdr.rx_hardwaregain_chan0 = 64
-sdr.rx_buffer_size = 4000
+sdr.rx_buffer_size = 100000
 
 sdr.tx_lo = 2400000000
 sdr.tx_rf_bandwidth = 20000000
 sdr.tx_hardwaregain_chan0 = 0
 # sdr.tx_cyclic_buffer = True
 
-epoch = 1 if single == 1 else 100
+epoch = 1 if single == 1 else 500
 start_index = 0 if local == 1 else 40000
 
 frame = np.array([1, 1, 1, -1, -1, 1, -1])
@@ -66,19 +66,19 @@ def main():
                                   np.where(rx_samples_real < np.negative(threhold), -1, 0))
 
         correlation = np.correlate(rx_samples_dec, frame, mode='full')
-        index = find_frame(correlation, 0, 0)
+        index = find_frame(correlation, 0, 50000)
         print(f"The {i}-th frame detected. Index: {index}")
         result[i] = index
 
         i = i + 1
 
-    print(result)
+    print(f'\nResult:\n{result}')
     if single == 0:
-        mean = np.mean(result[1:])
-        print(mean)
+        mean = np.mean(result[10:], dtype=np.float64)
+        print(f'\nMean: {mean} (exclude the first 10 samples)')
 
     end_time = time.time()
-    print(end_time - start_time)
+    print(f'\nTime spent: {end_time - start_time} s')
 
     if plot == 1:
         plt.figure("Result")
@@ -99,9 +99,11 @@ def main():
 
         plt.show()
     else:
+        plt.figure('Result(exclude the first 10 samples)')
+        plt.title('Result')
         plt.plot(result, 'o-')
         plt.grid()
-        plt.ylim([0, 4000])
+        plt.ylim([0, 90000])
         plt.show()
 
 

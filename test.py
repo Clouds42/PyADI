@@ -7,9 +7,9 @@ time_start = time.time()
 sdr = adi.Pluto("ip:ant.local")
 sdr.sample_rate = 1000000
 sdr.gain_control_mode_chan0 = 'manual'
-sdr.rx_hardwaregain_chan0 = 70
+sdr.rx_hardwaregain_chan0 = 64
 sdr.rx_buffer_size = 100000
-sdr.rx_lo = 915000000
+sdr.rx_lo = 2500000000
 sdr.rx_rf_bandwidth = 20000000
 data = sdr.rx()
 
