@@ -20,7 +20,8 @@ def interp(frame, sps):
     data = np.array([])
     for bit in frame:
         pulse = np.zeros(sps)
-        pulse[0] = bit  # set the first value to either a 1 or -1, followed by 7 zeros
+        # set the first value to either a 1 or -1, followed by 7 zeros
+        pulse[0] = bit
         data = np.concatenate((data, pulse))  # add the 8 samples to the signal
     data = np.tile(data, 20)  # longer for stable wave
     return data
@@ -61,17 +62,3 @@ def time_rec(rx_samples, sps):
     # remove the first two, and anything after i_out (that was never filled out)
     out = out[2:i_out]
     return out
-
-def find_frame(array, threhold = 800, start_index = 40000):
-    sliced_array = array[start_index:]
-    abs_array = np.abs(sliced_array)
-    greater_than = abs_array > threhold
-    index = np.argmax(greater_than)
-    result = index + start_index
-
-    if index != 0 and greater_than[index]:
-        # print(f"第一个绝对值大于{threhold}的元素的索引是：{result}")
-        return result
-    else:
-        # print(f"没有找到绝对值大于{threhold}的元素。")
-        return 0

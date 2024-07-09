@@ -4,30 +4,33 @@ import numpy as np
 import adi
 import matplotlib.pyplot as plt
 import queue
-from sdr_func import *
+from sdr_ranging_func import *
 
-local = 0  # 1 or 0
-single = 0  # 1 or 0
-plot = 0
+filename = '3_0m.txt'
+
+self = 1  # 1 or 0
+test = 0  # 1 or 0
+verbose = 1
+step = 25
 
 sdr = adi.Pluto("ip:ant.local")
 sdr.sample_rate = 1000000
+sdr.rx_rf_bandwidth = 20000000
+sdr.tx_rf_bandwidth = 20000000
 
 sdr.gain_control_mode_chan0 = 'manual'
-sdr.rx_lo = 2400000000 if local == 1 else 2500000000
-sdr.rx_rf_bandwidth = 20000000
 sdr.rx_hardwaregain_chan0 = 64
-sdr.rx_buffer_size = 100000
+sdr.tx_hardwaregain_chan0 = 0
+
+sdr.rx_lo = 2400000000 if self == 1 else 2500000000
+sdr.rx_buffer_size = 4000 if self == 1 else 100000
 
 sdr.tx_lo = 2400000000
-sdr.tx_rf_bandwidth = 20000000
-sdr.tx_hardwaregain_chan0 = 0
 # sdr.tx_cyclic_buffer = True
 
-epoch = 1 if single == 1 else 500
-start_index = 0 if local == 1 else 40000
+epoch = 1 if test == 1 else 500
 
-frame = np.array([1, 1, 1, -1, -1, 1, -1])
+frame = np.array([1, 1, 1, -1, -1, 1, -1])  # 7-bit barker code
 data = np.tile(frame, 10)
 tx_samples = data * (2**14)
 
@@ -45,6 +48,7 @@ def main():
     start_time = time.time()
 
     i = 0
+    j = 0
     result = np.zeros(epoch)
     results_queue = queue.Queue()
 
@@ -60,27 +64,38 @@ def main():
 
         rx_samples = results_queue.get()
         rx_samples_real = np.real(rx_samples)
-        threhold = np.mean([0, np.max(rx_samples_real)])
+        rx_samples_bin = binarize(rx_samples_real)
 
-        rx_samples_dec = np.where(rx_samples_real > threhold, 1,
-                                  np.where(rx_samples_real < np.negative(threhold), -1, 0))
+        correlation = np.correlate(rx_samples_bin, frame, mode='full')
+        index = find_frame(correlation, 0, 0 if self == 1 else 50000)
 
-        correlation = np.correlate(rx_samples_dec, frame, mode='full')
-        index = find_frame(correlation, 0, 50000)
-        print(f"The {i}-th frame detected. Index: {index}")
+        if test == 1:
+            break
+
+        if verbose:
+            if j > step - 1:
+                print(f"The {i}-th frame detected. Index: {index}")
+                j = 1
+            else:
+                j = j + 1
+
         result[i] = index
 
         i = i + 1
 
-    print(f'\nResult:\n{result}')
-    if single == 0:
-        mean = np.mean(result[10:], dtype=np.float64)
-        print(f'\nMean: {mean} (exclude the first 10 samples)')
+    if test == 1:
+        print(f'Result: {index}')
+    else:
+        # print(f'\nResult:\n{result}')
+        mean = mean_clean(result)[0]
+        print(f'\nMean: {mean} (exclude the outliers)')
 
     end_time = time.time()
     print(f'\nTime spent: {end_time - start_time} s')
 
-    if plot == 1:
+    save_to_file(result, filename)
+
+    if test == 1:
         plt.figure("Result")
         plt.grid()
 
@@ -90,8 +105,8 @@ def main():
         plt.ylim([-2048, 2048])
 
         plt.subplot(3, 1, 2)
-        plt.title("Decoded")
-        plt.plot(rx_samples_dec, 'go-')
+        plt.title("Binarization")
+        plt.plot(rx_samples_bin, 'go-')
 
         plt.subplot(3, 1, 3)
         plt.title("Correlated")
@@ -99,11 +114,22 @@ def main():
 
         plt.show()
     else:
-        plt.figure('Result(exclude the first 10 samples)')
-        plt.title('Result')
-        plt.plot(result, 'o-')
+        plt.figure("Result")
         plt.grid()
-        plt.ylim([0, 90000])
+
+        plt.subplot(2, 1, 1)
+        plt.title('Result - raw')
+        plt.plot(result, 'go-')
+        plt.xlim([0, epoch])
+        plt.ylim([0, 4000 if self == 1 else 90000])
+
+        result_clean = mean_clean(result)[1]
+        plt.subplot(2, 1, 2)
+        plt.title('Result - clean')
+        plt.plot(result_clean, 'go-')
+        plt.xlim([0, epoch])
+        plt.ylim([0, 4000 if self == 1 else 90000])
+
         plt.show()
 
 
