@@ -1,7 +1,7 @@
 import numpy as np
 import adi
 import matplotlib.pyplot as plt
-from sdr_bpsk_func import *
+from bpsk.sdr_bpsk_func import *
 import time
 
 start = time.time()

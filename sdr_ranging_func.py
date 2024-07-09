@@ -36,14 +36,13 @@ def mean_clean(data, order=3):
     return np.array([np.mean(clean_data), clean_data], dtype=object)
 
 
-def clean_data(file_path):
-    with open(file_path, 'r') as file:
+def read_data(filename):
+    with open(filename, 'r') as file:
         data = file.read()
-    # Remove non-numeric characters and split by whitespace
     cleaned_data = re.findall(r'\d+\.\d+|\d+', data)
     return np.array(cleaned_data, dtype=np.float64)
 
 
-def save_to_file(data, filename):
+def save_data(data, filename):
     with open(filename, 'w') as file:
         file.write(str(data))

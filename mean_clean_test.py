@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-data = clean_data('2_25m.txt')
+data = read_data('2_25m.txt')
 plt.subplot(5, 1, 1)
 plt.plot(data, 'go-')
 plt.ylim([0, 90000])

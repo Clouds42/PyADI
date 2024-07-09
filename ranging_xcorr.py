@@ -6,33 +6,29 @@ import matplotlib.pyplot as plt
 import queue
 from sdr_ranging_func import *
 
-filename = '3_0m.txt'
-
-self = 1  # 1 or 0
-test = 0  # 1 or 0
-verbose = 1
-step = 25
 
 sdr = adi.Pluto("ip:ant.local")
 sdr.sample_rate = 1000000
 sdr.rx_rf_bandwidth = 20000000
 sdr.tx_rf_bandwidth = 20000000
-
 sdr.gain_control_mode_chan0 = 'manual'
 sdr.rx_hardwaregain_chan0 = 64
 sdr.tx_hardwaregain_chan0 = 0
-
-sdr.rx_lo = 2400000000 if self == 1 else 2500000000
-sdr.rx_buffer_size = 4000 if self == 1 else 100000
-
-sdr.tx_lo = 2400000000
-# sdr.tx_cyclic_buffer = True
-
-epoch = 1 if test == 1 else 500
-
 frame = np.array([1, 1, 1, -1, -1, 1, -1])  # 7-bit barker code
 data = np.tile(frame, 10)
 tx_samples = data * (2**14)
+
+self = 1  # 1 for autonomous sending and receiving and 0 for bidirectional communication
+test = 1  # 1 for single and 0 for multible
+verbose = 1  # 1 for detailed log output
+step = 50
+
+sdr.rx_lo = 2400000000 if self else 2500000000
+sdr.rx_buffer_size = 4000 if self else 100000
+
+sdr.tx_lo = 2400000000
+
+epoch = 1 if test else 1000
 
 
 def tx():
@@ -47,10 +43,10 @@ def rx(q):
 def main():
     start_time = time.time()
 
-    i = 0
-    j = 0
-    result = np.zeros(epoch)
-    results_queue = queue.Queue()
+    i = 0  # current iteration
+    j = 0  # control the step
+    result = np.zeros(epoch)  # preallocate
+    results_queue = queue.Queue()  # bring the result back to the main thread
 
     while i < epoch:
         t1 = threading.Thread(target=tx)
@@ -59,17 +55,18 @@ def main():
         t1.start()
         t2.start()
 
-        t1.join()
+        t1.join()  # wait until the thread terminates
         t2.join()
 
         rx_samples = results_queue.get()
-        rx_samples_real = np.real(rx_samples)
+        rx_samples_real = np.real(rx_samples)  # convert complex to real
+        # binarization for correlate
         rx_samples_bin = binarize(rx_samples_real)
 
         correlation = np.correlate(rx_samples_bin, frame, mode='full')
-        index = find_frame(correlation, 0, 0 if self == 1 else 50000)
+        index = find_frame(correlation, 0, 0 if self else 50000)
 
-        if test == 1:
+        if test:
             break
 
         if verbose:
@@ -83,19 +80,21 @@ def main():
 
         i = i + 1
 
-    if test == 1:
+    if test:
         print(f'Result: {index}')
     else:
-        # print(f'\nResult:\n{result}')
         mean = mean_clean(result)[0]
-        print(f'\nMean: {mean} (exclude the outliers)')
+        print(f'\nMean: {mean} (exclude the outliers with 3-order)')
+
+        current_time = time.localtime()
+        formatted_time = time.strftime('%m%d%H%M%S', current_time)
+        filename = '0m_' + formatted_time + '_' + str(np.round(mean, 4)) + '.txt'
+        save_data(result, filename)
 
     end_time = time.time()
     print(f'\nTime spent: {end_time - start_time} s')
 
-    save_to_file(result, filename)
-
-    if test == 1:
+    if test:
         plt.figure("Result")
         plt.grid()
 
@@ -121,14 +120,14 @@ def main():
         plt.title('Result - raw')
         plt.plot(result, 'go-')
         plt.xlim([0, epoch])
-        plt.ylim([0, 4000 if self == 1 else 90000])
+        plt.ylim([0, 4000 if self else 90000])
 
         result_clean = mean_clean(result)[1]
         plt.subplot(2, 1, 2)
-        plt.title('Result - clean')
+        plt.title('Result - clean(3-order)')
         plt.plot(result_clean, 'go-')
         plt.xlim([0, epoch])
-        plt.ylim([0, 4000 if self == 1 else 90000])
+        plt.ylim([0, 4000 if self else 90000])
 
         plt.show()
 
