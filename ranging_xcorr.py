@@ -19,16 +19,17 @@ data = np.tile(frame, 10)
 tx_samples = data * (2**14)
 
 self = 1  # 1 for autonomous sending and receiving and 0 for bidirectional communication
-test = 1  # 1 for single and 0 for multible
+test = 0  # 1 for single and 0 for multible(1 for save data to files)
 verbose = 1  # 1 for detailed log output
 step = 50
+dist = 30  # distance in the filename
 
 sdr.rx_lo = 2400000000 if self else 2500000000
 sdr.rx_buffer_size = 4000 if self else 100000
 
 sdr.tx_lo = 2400000000
 
-epoch = 1 if test else 1000
+epoch = 1 if test else 500
 
 
 def tx():
@@ -83,12 +84,12 @@ def main():
     if test:
         print(f'Result: {index}')
     else:
-        mean = mean_clean(result)[0]
+        mean = np.round(mean_clean(result)[0], 4)
         print(f'\nMean: {mean} (exclude the outliers with 3-order)')
 
         current_time = time.localtime()
         formatted_time = time.strftime('%m%d%H%M%S', current_time)
-        filename = '0m_' + formatted_time + '_' + str(np.round(mean, 4)) + '.txt'
+        filename = f'./data/{dist}m_{formatted_time}_{mean}.txt'
         save_data(result, filename)
 
     end_time = time.time()
@@ -120,14 +121,14 @@ def main():
         plt.title('Result - raw')
         plt.plot(result, 'go-')
         plt.xlim([0, epoch])
-        plt.ylim([0, 4000 if self else 90000])
+        plt.ylim([0, sdr.rx_buffer_size])
 
         result_clean = mean_clean(result)[1]
         plt.subplot(2, 1, 2)
         plt.title('Result - clean(3-order)')
         plt.plot(result_clean, 'go-')
         plt.xlim([0, epoch])
-        plt.ylim([0, 4000 if self else 90000])
+        plt.ylim([0, sdr.rx_buffer_size])
 
         plt.show()
 
