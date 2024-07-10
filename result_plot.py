@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-files = [f for f in os.listdir('./') if f.endswith('.txt')]
+files = [f for f in os.listdir('./data/') if f.endswith('.txt')]
 
 data = []
 for file in files:

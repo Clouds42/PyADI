@@ -21,8 +21,8 @@ tx_samples = data * (2**14)
 self = 1  # 1 for autonomous sending and receiving and 0 for bidirectional communication
 test = 0  # 1 for single and 0 for multible(1 for save data to files)
 verbose = 1  # 1 for detailed log output
-step = 50
-dist = 30  # distance in the filename
+step = 1
+dist = 50  # distance in the filename
 
 sdr.rx_lo = 2400000000 if self else 2500000000
 sdr.rx_buffer_size = 4000 if self else 100000
@@ -72,7 +72,7 @@ def main():
 
         if verbose:
             if j > step - 1:
-                print(f"The {i}-th frame detected. Index: {index}")
+                print(f'\rThe {i}-th frame detected. Index: {index}', end='')
                 j = 1
             else:
                 j = j + 1
@@ -85,7 +85,7 @@ def main():
         print(f'Result: {index}')
     else:
         mean = np.round(mean_clean(result)[0], 4)
-        print(f'\nMean: {mean} (exclude the outliers with 3-order)')
+        print(f'\rMean: {mean} (exclude the outliers with 3-order)')
 
         current_time = time.localtime()
         formatted_time = time.strftime('%m%d%H%M%S', current_time)
