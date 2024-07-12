@@ -19,6 +19,8 @@ def find_frame(array, threhold=0, start_index=50000):
 
 
 def remove_outliers(data, threshold=2):
+    # data = np.array(data)
+    # data = data[data > 80000]
     mean = np.mean(data)
     std = np.std(data)
     z_scores = [(x - mean) / std for x in data]

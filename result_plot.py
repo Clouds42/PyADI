@@ -9,9 +9,9 @@ files = [f for f in os.listdir('./data/') if f.endswith('.txt')]
 data = []
 for file in files:
     parts = file.split('_')
+    print(parts)
     distance = parts[0]
-    timestamp = parts[1]
-    num_samples = float(parts[2].replace('.txt', ''))
+    num_samples = float(parts[1].replace('.txt', ''))
 
     data.append({'Distance': distance, 'Data': num_samples})
 

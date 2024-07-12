@@ -1,35 +1,34 @@
 import threading
+import adi
 import time
 import numpy as np
-import adi
 import matplotlib.pyplot as plt
 import queue
 from sdr_ranging_func import *
 
 
+self = 0  # 1 for autonomous sending and receiving and 0 for bidirectional communication
+test = 0  # 1 for single and 0 for multible(1 for save data to files)
+verbose = 1  # 1 for detailed log output
+step = 1
+dist = 6  # distance in the filename
+epoch = 1 if test else 1500
+
+# region parameter
 sdr = adi.Pluto("ip:ant.local")
 sdr.sample_rate = 1000000
 sdr.rx_rf_bandwidth = 20000000
 sdr.tx_rf_bandwidth = 20000000
 sdr.gain_control_mode_chan0 = 'manual'
-sdr.rx_hardwaregain_chan0 = 64
+sdr.rx_hardwaregain_chan0 = 70
 sdr.tx_hardwaregain_chan0 = 0
+sdr.rx_lo = 2400000000 if self else 2500000000
+sdr.rx_buffer_size = 4000 if self else 100000
+sdr.tx_lo = 2400000000
 frame = np.array([1, 1, 1, -1, -1, 1, -1])  # 7-bit barker code
 data = np.tile(frame, 10)
 tx_samples = data * (2**14)
-
-self = 1  # 1 for autonomous sending and receiving and 0 for bidirectional communication
-test = 0  # 1 for single and 0 for multible(1 for save data to files)
-verbose = 1  # 1 for detailed log output
-step = 1
-dist = 50  # distance in the filename
-
-sdr.rx_lo = 2400000000 if self else 2500000000
-sdr.rx_buffer_size = 4000 if self else 100000
-
-sdr.tx_lo = 2400000000
-
-epoch = 1 if test else 500
+# endregion
 
 
 def tx():
